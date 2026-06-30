@@ -6,6 +6,9 @@ constexpr uint8_t dummyByte = 0x0;
 
 constexpr uint8_t sentinelHeader = 0x5A;
 
+constexpr uint8_t digitalControllerSize = 2;
+constexpr uint8_t rumbleAnalogModeSize = 6;
+
 uint8_t rxHeader[3];
 uint8_t rxDataBuffer[6];
 
@@ -26,40 +29,54 @@ void readRxHeader()
 
 }
 
+void pollingData(uint8_t forSize)
+{
+  for (size_t i = 0; i < forSize; i++)
+  {
+    rxDataBuffer[i] = SpiTransfer(dummyByte);
+  }
+}
+
+void defaultButtonsValue()
+{
+  rxDataBuffer[0] = 0xFF;
+  rxDataBuffer[1] = 0xFF;
+  rxDataBuffer[2] = 0x80;
+  rxDataBuffer[3] = 0x80;
+  rxDataBuffer[4] = 0x80;
+  rxDataBuffer[5] = 0x80;
+}
+
 void rxPayloadIdDispatcher()
 {
-    if(rxHeader[2] == sentinelHeader)
+
+  memset(rxDataBuffer, 0, sizeof(rxDataBuffer));
+
+  if(rxHeader[2] == sentinelHeader)
   { 
       switch(rxHeader[1])
     {
       case 0x41 :
-    
-      break;
+        pollingData(digitalControllerSize);
+        break;
 
-      case 0x53 :
-      
-      break;
-    
       case 0x73 :
-        
-      break;
-    
-      case 0x79 : 
+        pollingData(rumbleAnalogModeSize);
+        break;
       
-      break;
+      default :
+        defaultButtonsValue();
+        break;
+
     }
+
+    endFrame();
   }
 
   else
   {
     // putting default value in case of frame corruption
-    rxDataBuffer[0] = 0xFF;
-    rxDataBuffer[1] = 0xFF;
-    rxDataBuffer[2] = 0x80;
-    rxDataBuffer[3] = 0x80;
-    rxDataBuffer[4] = 0x80;
-    rxDataBuffer[5] = 0x80;
-
+    defaultButtonsValue();
     endFrame();
   }
 }

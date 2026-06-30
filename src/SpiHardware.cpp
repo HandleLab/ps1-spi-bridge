@@ -6,9 +6,9 @@ uint8_t InternalACK;
 uint8_t InternalCHIPSELECT;
 
 // SPI SETTINGS
-const uint32_t CLKRate = 250000;
-const uint8_t bitOrder = 0x0;
-const uint8_t spiMode = 0x0C;
+constexpr uint32_t CLKRate = 250000;
+constexpr uint8_t bitOrder = 0x0;
+constexpr uint8_t spiMode = 0x0C;
 
 void hardwareSetup(uint8_t ACK, uint8_t CHIPSELECT)
 {
