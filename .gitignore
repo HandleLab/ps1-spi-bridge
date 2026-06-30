@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+# PlatformIO & IDE settings
+*.vscode
+*.pio
