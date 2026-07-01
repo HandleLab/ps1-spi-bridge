@@ -11,3 +11,5 @@ void rxPayloadIdDispatcher();
 void pollingData();
 
 void defaultButtonsValue();
+
+uint8_t* pollController();

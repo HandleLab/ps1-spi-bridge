@@ -1,41 +1,48 @@
 #include "PS1Controller.h"
+#include "ProtocolConstants.h"
 
-constexpr uint8_t slaveId = 0x01;
-constexpr uint8_t pollinCmdId = 0x42;
-constexpr uint8_t dummyByte = 0x0;
 
-constexpr uint8_t sentinelHeader = 0x5A;
 
-constexpr uint8_t digitalControllerSize = 2;
-constexpr uint8_t rumbleAnalogModeSize = 6;
-
+// buffer for header and payload
 uint8_t rxHeader[3];
 uint8_t rxDataBuffer[6];
+
 
 void initModule(uint8_t ACK, uint8_t CHIPSELECT)
 {
   hardwareSetup(ACK, CHIPSELECT);
 }
 
+
 void readRxHeader()
 {
   startFrame();
   
-  rxHeader[0] = SpiTransfer(slaveId);
+  rxHeader[0] = SpiTransfer(PS1Protocol::slaveId);
 
-  rxHeader[1] = SpiTransfer(pollinCmdId); 
+  rxHeader[1] = SpiTransfer(PS1Protocol::pollinCmdId); 
 
-  rxHeader[2] = SpiTransfer(dummyByte);
+  rxHeader[2] = SpiTransfer(PS1Protocol::dummyByte);
 
 }
+
 
 void pollingData(uint8_t forSize)
 {
   for (size_t i = 0; i < forSize; i++)
   {
-    rxDataBuffer[i] = SpiTransfer(dummyByte);
+    rxDataBuffer[i] = SpiTransfer(PS1Protocol::dummyByte);
+  }
+
+  if (forSize == PS1Protocol::digitalControllerSize)
+  {
+    rxDataBuffer[2] = 0x80;
+    rxDataBuffer[3] = 0x80;
+    rxDataBuffer[4] = 0x80;
+    rxDataBuffer[5] = 0x80;
   }
 }
+
 
 void defaultButtonsValue()
 {
@@ -47,21 +54,22 @@ void defaultButtonsValue()
   rxDataBuffer[5] = 0x80;
 }
 
+
 void rxPayloadIdDispatcher()
 {
 
   memset(rxDataBuffer, 0, sizeof(rxDataBuffer));
 
-  if(rxHeader[2] == sentinelHeader)
+  if(rxHeader[2] == PS1Protocol::sentinelHeader)
   { 
       switch(rxHeader[1])
     {
       case 0x41 :
-        pollingData(digitalControllerSize);
+        pollingData(PS1Protocol::digitalControllerSize);
         break;
 
       case 0x73 :
-        pollingData(rumbleAnalogModeSize);
+        pollingData(PS1Protocol::rumbleAnalogModeSize);
         break;
       
       default :
@@ -79,4 +87,13 @@ void rxPayloadIdDispatcher()
     defaultButtonsValue();
     endFrame();
   }
+}
+
+
+uint8_t* pollController()
+{
+  readRxHeader();
+  rxPayloadIdDispatcher();
+
+  return rxDataBuffer;
 }
